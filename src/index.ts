@@ -64,7 +64,21 @@ app.post("/api/v1/signin", async (req, res) => {
     res.status(411).json({ isRequestBodyObjValid });
   }
 });
-app.post("/api/v1/content", async (req, res) => {});
+app.post("/api/v1/content", async (req, res) => {
+  const contentTypes = ["image", "video", "article", "audio"] as const;
+  const requestBodyObj = z.object({
+    list: z.string().min(3).max(20),
+    type: z.enum(contentTypes),
+    title: z.string().min(3).max(20),
+  });
+  //   type requestBodyObjType = z.infer<typeof requestBodyObj>;
+  const isRequestBodyObjValid = requestBodyObj.safeParse(req.body);
+  if (isRequestBodyObjValid.success) {
+    const { username, password } = req.body;
+  } else {
+    res.status(411).json({ isRequestBodyObjValid });
+  }
+});
 app.get("/api/v1/content", async (req, res) => {});
 
 app.delete("/api/v1/content", async (req, res) => {});
