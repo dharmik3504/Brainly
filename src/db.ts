@@ -1,7 +1,9 @@
 import mongoose, { Types } from 'mongoose';
-const {Schema,model} =mongoose
+const {Schema,model,connect} =mongoose
+
 
 const contentTypes = ['image', 'video', 'article', 'audio']; 
+connect("mongodb+srv://admin:JrTcMyvtRZBlsjLC@cluster0.2mnf2.mongodb.net/brainly")
 const UserSchema=new Schema({
     username:{type:String,require:true,unique:true},
     password:{type:String,require:true}
@@ -25,11 +27,8 @@ const LinkSchema=new Schema({
 
 })
 
-const User=model("User",UserSchema)
+export const User=model("User",UserSchema)
 const Content=model("Content",ContentSchema)
 const Tag=model("Tag",TagSchema)
 const Link=model("Link",LinkSchema)
 
-module.exports={
-    User,Content,Tag,Link
-}
