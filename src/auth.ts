@@ -1,21 +1,25 @@
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import z from "zod";
+import { JWT_PASSWORD } from "./config";
 
-export const auth = (req, res, next) => {
-  const JWT_PASSWORD = "hdhdhdhkakielejdjfnjnfek";
-
+export const middleware = (req: Request, res: Response, next: NextFunction) => {
   const requestBodyObj = z.object({
     token: z.string(),
   });
-  const isRequestBodyObjValid = requestBodyObj.safeParse(req.body);
+  const isRequestBodyObjValid = requestBodyObj.safeParse(req.headers);
   if (isRequestBodyObjValid.success) {
     const { token } = req.headers;
-    const verifyToken = jwt.verify(token, JWT_PASSWORD);
+
+    const verifyToken = jwt.verify(token as string, JWT_PASSWORD);
     if (verifyToken) {
-      req.userId = verifyToken;
+      //@ts-ignore
+      req.userId = verifyToken.id;
       next();
     } else {
-      res.json({ message: "user is not valid please sign in again" });
+      res
+        .status(403)
+        .json({ message: "user is not valid please sign in again" });
     }
   } else {
     res.status(411).json({ isRequestBodyObjValid });

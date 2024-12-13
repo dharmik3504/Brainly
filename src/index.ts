@@ -1,11 +1,13 @@
 import express from "express";
-import { User } from "./db";
+import { ContentModel, User } from "./db";
 import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { JWT_PASSWORD } from "./config";
+import { middleware } from "./auth";
 const app = express();
 app.use(express.json());
-const JWT_PASSWORD = "hdhdhdhkakielejdjfnjnfek";
+
 app.post("/api/v1/signup", async (req, res) => {
   const requestBodyObj = z.object({
     username: z.string().min(3).max(20),
@@ -64,24 +66,61 @@ app.post("/api/v1/signin", async (req, res) => {
     res.status(411).json({ isRequestBodyObjValid });
   }
 });
-app.post("/api/v1/content", async (req, res) => {
+app.post("/api/v1/content", middleware, async (req, res) => {
   const contentTypes = ["image", "video", "article", "audio"] as const;
   const requestBodyObj = z.object({
-    list: z.string().min(3).max(20),
+    link: z.string().min(3),
     type: z.enum(contentTypes),
-    title: z.string().min(3).max(20),
+    title: z.string().min(3),
+  });
+  const requestHeader = z.object({
+    token: z.string().min(3),
   });
   //   type requestBodyObjType = z.infer<typeof requestBodyObj>;
   const isRequestBodyObjValid = requestBodyObj.safeParse(req.body);
   if (isRequestBodyObjValid.success) {
-    const { username, password } = req.body;
+    const { link, type, title } = req.body;
+    //@ts-ignore
+    const { userId } = req;
+    await ContentModel.create({
+      link,
+      type,
+      title,
+      userId,
+      tag: [],
+    });
+    res.json({
+      message: "Content Added",
+    });
   } else {
     res.status(411).json({ isRequestBodyObjValid });
   }
 });
-app.get("/api/v1/content", async (req, res) => {});
+app.get("/api/v1/content", middleware, async (req, res) => {
+  //   @ts-ignore
+  const userId = req.userId;
+  const contents = await ContentModel.find({ userId }).populate(
+    "userId",
+    "username"
+  );
+  res.json({
+    contents,
+  });
+});
 
-app.delete("/api/v1/content", async (req, res) => {});
+app.delete("/api/v1/content", middleware, async (req, res) => {
+  const { contentId } = req.body;
+  try {
+    const deleteContent = await ContentModel.deleteMany({
+      _id: contentId,
+      // @ts-ignore
+      userId: req.userId,
+    });
+    res.json({ mesaage: "deleted" });
+  } catch (e: any) {
+    res.json(e.message);
+  }
+});
 app.post("/api/v1/brain/share", async (req, res) => {});
 
 app.get("/api/v1/brain/:shareLink", async (req, res) => {});
