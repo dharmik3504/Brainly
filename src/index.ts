@@ -1,10 +1,11 @@
 import express from "express";
-import { ContentModel, User } from "./db";
+import { ContentModel, LinkModel, User } from "./db";
 import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { JWT_PASSWORD } from "./config";
 import { middleware } from "./auth";
+import { random } from "./utils";
 const app = express();
 app.use(express.json());
 
@@ -121,8 +122,48 @@ app.delete("/api/v1/content", middleware, async (req, res) => {
     res.json(e.message);
   }
 });
-app.post("/api/v1/brain/share", async (req, res) => {});
+app.post("/api/v1/brain/share", middleware, async (req, res) => {
+  const { share } = req.body;
+  if (share) {
+    const existingLink = await LinkModel.findOne({
+      // @ts-ignore
+      userId: req.userId,
+    });
 
-app.get("/api/v1/brain/:shareLink", async (req, res) => {});
+    if (existingLink) {
+      res.json({
+        hash: existingLink.hash,
+      });
+      return;
+    }
+
+    const hash = random(10);
+    const link = await LinkModel.create({
+      //@ts-ignore
+      userId: req.userId,
+      hash,
+    });
+    res.json({ message: `/share/${hash}` });
+  } else {
+    await LinkModel.deleteMany({
+      // @ts-ignore
+      user: req.userId,
+    });
+    res.json({ message: "Removed Link" });
+  }
+});
+
+app.get("/api/v1/brain/:shareLink", async (req, res) => {
+  const { shareLink } = req.params;
+  const link = await LinkModel.findOne({
+    hash: shareLink,
+  });
+  if (!link) {
+    res.json({
+      message: "incorrect input",
+    });
+    return;
+  }
+});
 
 app.listen(3000);
