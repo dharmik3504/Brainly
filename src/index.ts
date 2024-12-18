@@ -6,10 +6,12 @@ import jwt from "jsonwebtoken";
 import { JWT_PASSWORD } from "./config";
 import { middleware } from "./auth";
 import { random } from "./utils";
+import cors from "cors";
 const app = express();
 app.use(express.json());
-
+app.use(cors());
 app.post("/api/v1/signup", async (req, res) => {
+  console.log(req.body);
   const requestBodyObj = z.object({
     username: z.string().min(3).max(20),
     password: z.string().min(3).max(20),
@@ -68,7 +70,14 @@ app.post("/api/v1/signin", async (req, res) => {
   }
 });
 app.post("/api/v1/content", middleware, async (req, res) => {
-  const contentTypes = ["image", "video", "article", "audio"] as const;
+  const contentTypes = [
+    "image",
+    "video",
+    "article",
+    "audio",
+    "Youtube",
+    "Twitter",
+  ] as const;
   const requestBodyObj = z.object({
     link: z.string().min(3),
     type: z.enum(contentTypes),

@@ -2,7 +2,14 @@ import mongoose, { Types } from "mongoose";
 import { MONGODB_URL } from "./config";
 const { Schema, model, connect } = mongoose;
 
-const contentTypes = ["image", "video", "article", "audio"];
+const contentTypes = [
+  "image",
+  "video",
+  "article",
+  "audio",
+  "Youtube",
+  "Twitter",
+];
 connect(MONGODB_URL);
 const UserSchema = new Schema({
   username: { type: String, require: true, unique: true },
